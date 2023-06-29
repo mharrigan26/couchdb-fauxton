@@ -34,9 +34,7 @@
       "desiredCapabilities" : {
         "browserName" : "chrome",
         "javascriptEnabled" : true,
-        "acceptSslCerts" : true,
-        "chromeOptions": {
-          "w3c": false
+        "acceptSslCerts" : true
         }
       },
       "exclude": <%= exclude_tests %>,
