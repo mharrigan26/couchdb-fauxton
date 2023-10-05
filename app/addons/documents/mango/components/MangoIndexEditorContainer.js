@@ -11,47 +11,97 @@
 // the License.
 
 import { connect } from 'react-redux';
+import FauxtonAPI from "../../../../core/api";
 import * as IndexResultActions from '../../index-results/actions/fetch';
 import * as IndexResultBaseActions from '../../index-results/actions/base';
-import MangoIndexEditor from './MangoIndexEditor';
+import MangoQueryEditor from './MangoQueryEditor';
 import Helpers from '../mango.helper';
 import Actions from '../mango.actions';
 import * as MangoAPI from '../mango.api';
 
-const mapStateToProps = ({ mangoQuery, indexResults, databases }, ownProps) => {
+const getAvailableQueryIndexes = ({ availableIndexes }) => {
+  if (!availableIndexes) {
+    return [];
+  }
+  return availableIndexes.filter(({ type }) => {
+    return ['json', 'special'].includes(type);
+  });
+};
+
+const getAvailableAdditionalIndexes = ({ additionalIndexes }) => {
+  if (!additionalIndexes) {
+    return [];
+  }
+  const indexes = FauxtonAPI.getExtensions('mango:additionalIndexes')[0];
+  if (!indexes) {
+    return;
+  }
+
+  return additionalIndexes.filter((el) => {
+    return el.get('type').indexOf(indexes.type) !== -1;
+  });
+};
+
+const mapStateToProps = (state, ownProps) => {
+  const mangoQuery = state.mangoQuery;
+  const indexResults = state.indexResults;
   return {
-    description: ownProps.description,
     databaseName: ownProps.databaseName,
-    queryIndexCode: Helpers.formatCode(mangoQuery.queryIndexCode),
-    templates: mangoQuery.queryIndexTemplates,
+    queryFindCode: Helpers.formatCode(mangoQuery.queryFindCode),
+    queryFindCodeChanged: mangoQuery.queryFindCodeChanged,
+    availableIndexes: getAvailableQueryIndexes(mangoQuery),
+    additionalIndexes: getAvailableAdditionalIndexes(mangoQuery),
+    isLoading: mangoQuery.isLoading,
+    history: mangoQuery.history,
+    description: ownProps.description,
+    editorTitle: ownProps.editorTitle,
+    additionalIndexesText: ownProps.additionalIndexesText,
     fetchParams: indexResults.fetchParams,
+    executionStats: indexResults.executionStats,
+    warning: indexResults.warning,
     partitionKey: ownProps.partitionKey,
-    isLoading: databases.isLoadingDbInfo,
-    isDbPartitioned: databases.isDbPartitioned
+    executionStatsSupported: mangoQuery.executionStatsSupported,
   };
 };
 
-const mapDispatchToProps = (dispatch, ownProps) => {
+const mapDispatchToProps = (dispatch/*, ownProps*/) => {
   return {
-    saveIndex: (options) => {
-      dispatch(Actions.saveIndex(options));
+    loadQueryHistory: (options) => {
+      dispatch(Actions.loadQueryHistory(options));
     },
-    loadIndexList: (options) => {
-      const queryIndexes = (params) => { return MangoAPI.fetchIndexes(ownProps.databaseName, params); };
-      dispatch(IndexResultActions.fetchDocs(queryIndexes, options.fetchParams, {}));
+
+    checkExecutionStatsSupport: (options) => {
+      dispatch(Actions.checkExecutionStatsSupport(options));
     },
+
+    runExplainQuery: (options) => {
+      dispatch(Actions.runExplainQuery(options));
+    },
+
+    runQuery: (options) => {
+      const queryDocs = (params) => {
+        return MangoAPI.mangoQueryDocs(options.databaseName, options.partitionKey, options.queryCode, params);
+      };
+
+      dispatch(Actions.hideQueryExplain());
+      dispatch(Actions.newQueryFindCode(options));
+      dispatch(IndexResultActions.fetchDocs(queryDocs, options.fetchParams, {}));
+    },
+
     clearResults: () => {
       dispatch(IndexResultBaseActions.resetState());
     },
-    loadIndexTemplates: () => {
-      dispatch(Actions.loadIndexTemplates());
+
+    manageIndexes: () => {
+      dispatch(Actions.hideQueryExplain());
     }
+
   };
 };
 
-const MangoIndexEditorContainer = connect(
+const MangoQueryEditorContainer = connect(
   mapStateToProps,
   mapDispatchToProps
-)(MangoIndexEditor);
+)(MangoQueryEditor);
 
-export default MangoIndexEditorContainer;
+export default MangoQueryEditorContainer;

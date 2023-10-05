@@ -195,3 +195,37 @@
     width: 300px;
   }
 }
+
+.execution-stats {
+  .execution-stats-header {
+    font-size: 16px;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .execution-stats-empty-body {
+    font-style: italic;
+  }
+
+  .execution-stats-body {
+    [data-status="false"] {
+      color: $cf-text01-muted;
+    }
+    [data-status="true"] {
+      .value {
+        font-weight: bold;
+      }
+    }
+  }
+  .warning {
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    font-weight: 600;
+    background-color: $cf-alert-bg;
+    color: $cf-alert-color;
+    border-left: 4px solid $cf-warning;
+    i::before {
+      color: $cf-warning;
+    }
+  }
+}
